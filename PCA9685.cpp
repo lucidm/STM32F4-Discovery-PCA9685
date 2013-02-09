@@ -268,10 +268,14 @@ uint16_t PCA9685::getRegisterValue(uint8_t reg)
 
 /**
  * Status of last I2C operation
- * @return msg_t - status
+ * @return i2cflags_t - status
  */
-msg_t PCA9685::getStatus() {
-    return this->status;
+i2cflags_t PCA9685::getStatus() {
+    if (this->status == RDY_RESET)
+        return i2cGetErrors(this->driver);
+    else if (this->status == RDY_TIMEOUT)
+        return I2CD_TIMEOUT;
+    return I2CD_NO_ERROR;
 }
 
 /**

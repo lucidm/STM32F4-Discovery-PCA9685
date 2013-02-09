@@ -97,7 +97,7 @@ class PCA9685 {
         uint32_t getPWM(uint8_t channel);
         uint16_t getRegisterValue(uint8_t reg);
         void acquireBus(uint8_t exclusive);
-        msg_t getStatus();
+        i2cflags_t getStatus();
         uint8_t getAddress();
 
 
