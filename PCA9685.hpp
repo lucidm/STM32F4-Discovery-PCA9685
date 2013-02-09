@@ -84,7 +84,7 @@ static const I2CConfig PCA9685_I2C_CONFIG = {
 
 class PCA9685 {
     public:
-        PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address = PCA9685_ADDRESS, uint16_t freq = PCA9685_FREQ);
+        PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address = PCA9685_ADDRESS, uint16_t freq = PCA9685_FREQ, uint8_t acquirebus = false);
         PCA9685();
         ~PCA9685();
 
@@ -96,6 +96,7 @@ class PCA9685 {
         void setPeriod(uint8_t channel, float period, uint8_t duty);
         uint32_t getPWM(uint8_t channel);
         uint16_t getRegisterValue(uint8_t reg);
+        void acquireBus(uint8_t exclusive);
         msg_t getStatus();
         uint8_t getAddress();
 
@@ -105,6 +106,7 @@ class PCA9685 {
         uint8_t i2caddres;
         I2CDriver *driver;
         const I2CConfig *config;
+        uint8_t acquire;
 
         uint8_t rxbuff[32];
         uint8_t txbuff[32];

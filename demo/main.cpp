@@ -171,7 +171,7 @@ int main(void) {
 
 
 
-  pcachip = new PCA9685(&PCA9685_DEFI2C_DRIVER, &i2cconfig);
+  pcachip = new PCA9685(&PCA9685_DEFI2C_DRIVER, &i2cconfig, PCA9685_ADDRESS, PCA9685_FREQ, true);
   pcachip->setPWM(0, 150, 600);
   chThdSleepMilliseconds(2000);
   pcachip->setPWM(0, 0, 150);

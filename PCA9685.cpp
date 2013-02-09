@@ -43,13 +43,15 @@ extern "C" {
  * @param const I2CConfig *config I2C configuration structure
  * @param uint8_t address Address of the chip, default space starts at 0x40
  * @param uint16_t freq Default frequency of PWM
+ * @param uint8_t acquirebus - set I2C bus exclusive for thread
  *
  */
-PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, uint16_t freq) {
+PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, uint16_t freq, uint8_t acquirebus) {
     this->i2caddres = address;
     this->driver = driver;
     this->freq = freq;
     this->config = config;
+    this->acquire = acquirebus;
 
      i2cStart(this->driver, this->config);
      palSetPadMode(GPIOB, 10, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
@@ -71,6 +73,7 @@ PCA9685::PCA9685() {
     this->driver = &PCA9685_DEFI2C_DRIVER;
     this->freq = PCA9685_FREQ;
     this->config = &PCA9685_I2C_CONFIG;
+    this->acquire = false;
 
      i2cStart(this->driver, this->config);
      palSetPadMode(GPIOB, 10, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
@@ -146,7 +149,9 @@ void PCA9685::setPWM(uint8_t channel, uint16_t on, uint16_t off) {
   this->txbuff[3] = off & 0x00FF;
   this->txbuff[4] = off >> 8;
 
+  if (this->acquire) i2cAcquireBus(this->driver);
   this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, this->txbuff, 5, this->rxbuff, 0, 100);
+  if (this->acquire) i2cReleaseBus(this->driver);
 }
 
 /**
@@ -222,7 +227,9 @@ void PCA9685::writereg(uint8_t reg, uint8_t data) {
     this->txbuff[0] = reg;
     this->txbuff[1] = data;
 
+    if (this->acquire) i2cAcquireBus(this->driver);
     this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, this->txbuff, 2, this->rxbuff, 0, 100);
+    if (this->acquire) i2cReleaseBus(this->driver);
 }
 
 /*
@@ -231,7 +238,9 @@ void PCA9685::writereg(uint8_t reg, uint8_t data) {
 uint8_t PCA9685::readreg(uint8_t reg) {
     if (reg < 70 || reg > 249)
     {
+        if (this->acquire) i2cAcquireBus(this->driver);
         this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, &reg, 1, this->rxbuff, 1, 100);
+        if (this->acquire) i2cReleaseBus(this->driver);
     }
     return this->rxbuff[0];
 }
@@ -282,4 +291,12 @@ uint8_t PCA9685::setAddress(uint8_t address) {
  */
 uint8_t PCA9685::getAddress() {
     return this->i2caddres;
+}
+
+/**
+ * Acquire I2C bus exclusively during transmit
+ * @param uint8_t exclusive - true for making I2C bus exclusive for a thread, false if otherwise
+ */
+void PCA9685::acquireBus(uint8_t exclusive) {
+    this->acquire = exclusive;
 }
