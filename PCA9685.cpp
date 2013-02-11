@@ -73,7 +73,7 @@ PCA9685::PCA9685() {
     this->driver = &PCA9685_DEFI2C_DRIVER;
     this->freq = PCA9685_FREQ;
     this->config = &PCA9685_I2C_CONFIG;
-    this->acquire = false;
+    this->acquire = true;
 
      i2cStart(this->driver, this->config);
      palSetPadMode(GPIOB, 10, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
@@ -90,6 +90,14 @@ PCA9685::PCA9685() {
  */
 PCA9685::~PCA9685() {
     i2cStop(this->driver);
+}
+
+void* PCA9685::operator new(size_t size) {
+    return chCoreAlloc(size);
+}
+
+void PCA9685::operator delete(void *mem) {
+
 }
 
 /**
@@ -148,9 +156,10 @@ void PCA9685::setPWM(uint8_t channel, uint16_t on, uint16_t off) {
   this->txbuff[2] = on >> 8;
   this->txbuff[3] = off & 0x00FF;
   this->txbuff[4] = off >> 8;
+  this->tmo = MS2ST(4);
 
   if (this->acquire) i2cAcquireBus(this->driver);
-  this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, this->txbuff, 5, this->rxbuff, 0, 100);
+  this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, this->txbuff, 5, this->rxbuff, 0, this->tmo);
   if (this->acquire) i2cReleaseBus(this->driver);
 }
 
@@ -178,10 +187,11 @@ void PCA9685::setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, u
         txbuff[i+1] = off[j+1];
         j++;
     }
+    this->tmo = MS2ST(4);
 
     uint8_t oldmode = this->readreg(PCA9685_MODE1); //Preserve old mode
     this->writereg(PCA9685_MODE1, oldmode | PCA9685_MODE1_AI); //Set auto increment
-    this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, (uint8_t*) txbuff, (count+1) * sizeof(uint8_t), this->rxbuff, 0, 100);
+    this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, (uint8_t*) txbuff, (count+1) * sizeof(uint8_t), this->rxbuff, 0, this->tmo);
     this->writereg(PCA9685_MODE1, oldmode); //Restore old mode
 }
 
@@ -226,9 +236,10 @@ uint32_t PCA9685::getPWM(uint8_t channel) {
 void PCA9685::writereg(uint8_t reg, uint8_t data) {
     this->txbuff[0] = reg;
     this->txbuff[1] = data;
+    this->tmo = MS2ST(4);
 
     if (this->acquire) i2cAcquireBus(this->driver);
-    this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, this->txbuff, 2, this->rxbuff, 0, 100);
+    this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, this->txbuff, 2, this->rxbuff, 0, this->tmo);
     if (this->acquire) i2cReleaseBus(this->driver);
 }
 
@@ -238,8 +249,9 @@ void PCA9685::writereg(uint8_t reg, uint8_t data) {
 uint8_t PCA9685::readreg(uint8_t reg) {
     if (reg < 70 || reg > 249)
     {
+        this->tmo = MS2ST(4);
         if (this->acquire) i2cAcquireBus(this->driver);
-        this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, &reg, 1, this->rxbuff, 1, 100);
+        this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, &reg, 1, this->rxbuff, 1, this->tmo);
         if (this->acquire) i2cReleaseBus(this->driver);
     }
     return this->rxbuff[0];

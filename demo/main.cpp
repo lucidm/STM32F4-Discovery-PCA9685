@@ -49,6 +49,7 @@ static const I2CConfig i2cconfig = {
 
 
 PCA9685 *pcachip;
+
 //PCA9685 pcachip;
 
 void cmd_reg(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -168,7 +169,6 @@ int main(void) {
   sdStart(&SD2, NULL);
   palSetPadMode(GPIOA, 2, PAL_MODE_ALTERNATE(7));
   palSetPadMode(GPIOA, 3, PAL_MODE_ALTERNATE(7));
-
 
 
   pcachip = new PCA9685(&PCA9685_DEFI2C_DRIVER, &i2cconfig, PCA9685_ADDRESS, PCA9685_FREQ, true);

@@ -84,9 +84,12 @@ static const I2CConfig PCA9685_I2C_CONFIG = {
 
 class PCA9685 {
     public:
-        PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address = PCA9685_ADDRESS, uint16_t freq = PCA9685_FREQ, uint8_t acquirebus = false);
+        PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address = PCA9685_ADDRESS, uint16_t freq = PCA9685_FREQ, uint8_t acquirebus = true);
         PCA9685();
         ~PCA9685();
+        void* operator new(size_t size);
+        void operator delete(void *mem);
+
 
         void reset(void);
         uint8_t setAddress(uint8_t address);
@@ -112,6 +115,7 @@ class PCA9685 {
         uint8_t txbuff[32];
         uint16_t freq;
         msg_t status;
+        systime_t tmo;
 
         void writereg(uint8_t reg, uint8_t data);
         uint8_t readreg(uint8_t reg);
