@@ -164,7 +164,7 @@ void PCA9685::setPWM(uint8_t channel, uint16_t on, uint16_t off) {
 }
 
 /**
- * Set PWM for more than one channel.
+ * Set PWM for more than one channel. All channels in given range will be changed
  * @param uint8_t channel [0-15] Starting channel number.
  * @param const uint16_t *on Array of values of "on" for subsequent channel
  * @param const uint16_t *off Array of values of "off" for subsequent channel
@@ -182,7 +182,7 @@ void PCA9685::setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, u
         count = 15;
     uint8_t j=0;
     txbuff[0] = LED0_ON_L+4*channel;
-    for (uint8_t i=1; i<count; i+=2) {
+    for (uint8_t i=1; i<(16 - count); i+=2) {
         txbuff[i] = on[j];
         txbuff[i+1] = off[j+1];
         j++;
@@ -192,6 +192,34 @@ void PCA9685::setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, u
     uint8_t oldmode = this->readreg(PCA9685_MODE1); //Preserve old mode
     this->writereg(PCA9685_MODE1, oldmode | PCA9685_MODE1_AI); //Set auto increment
     this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, (uint8_t*) txbuff, (count+1) * sizeof(uint8_t), this->rxbuff, 0, this->tmo);
+    this->writereg(PCA9685_MODE1, oldmode); //Restore old mode
+}
+
+/**
+ * Set multiple channels at once. Only channels given in set will be changed all other will be preserved.
+ *
+ * @param const PWMSet *set array of PWMSet structures
+ * @param uint8_t length of set array
+ */
+void PCA9685::burstPWM(const PWMSet *set, uint8_t length){
+    uint32_t onoff[17];
+    uint8_t i, *txbuff;
+
+    onoff[0] = LED0_ON_L << 24;//Move starting channel number to most significant byte of first index
+    for (i=1; i<17; i++) {
+        onoff[i] = this->getPWM(i);
+    }
+
+    for (i=0; i<(length < 16 ? length : 16); i++) {
+        onoff[set[i].channel + 1] = set[i].off << 16 | set[i].on;
+    }
+
+    txbuff = (uint8_t *) onoff;
+    txbuff += 3; //Transmission buffer points to the first channel
+
+    uint8_t oldmode = this->readreg(PCA9685_MODE1); //Preserve old mode
+    this->writereg(PCA9685_MODE1, oldmode | PCA9685_MODE1_AI); //Set auto increment
+    this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, (uint8_t*) txbuff, 33, this->rxbuff, 0, this->tmo);
     this->writereg(PCA9685_MODE1, oldmode); //Restore old mode
 }
 

@@ -82,6 +82,12 @@ static const I2CConfig PCA9685_I2C_CONFIG = {
 #define PCA9685_DEFI2C_SPEED 400000
 #define PCA9685_DEFI2C_DRIVER I2CD2
 
+typedef struct SPWMSet {
+    uint8_t channel;
+    uint16_t on;
+    uint16_t off;
+} PWMSet;
+
 class PCA9685 {
     public:
         PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address = PCA9685_ADDRESS, uint16_t freq = PCA9685_FREQ, uint8_t acquirebus = true);
@@ -96,6 +102,7 @@ class PCA9685 {
         uint16_t setFreq(uint16_t freq);
         void setPWM(uint8_t channel, uint16_t on, uint16_t off);
         void setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, uint8_t count);
+        void burstPWM(const PWMSet *set, uint8_t lenght);
         void setPeriod(uint8_t channel, float period, uint8_t duty);
         uint32_t getPWM(uint8_t channel);
         uint16_t getRegisterValue(uint8_t reg);
