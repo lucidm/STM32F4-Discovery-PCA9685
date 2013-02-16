@@ -33,6 +33,7 @@ extern "C" {
 #include <cmath>
 #include <cstdlib>
 
+#include "PwmBase.hpp"
 #include "PCA9685.hpp"
 
 
@@ -49,7 +50,7 @@ extern "C" {
 PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, uint16_t freq, uint8_t acquirebus) {
     this->i2caddres = address;
     this->driver = driver;
-    this->freq = freq;
+    this->pwm_frequency = freq;
     this->config = config;
     this->acquire = acquirebus;
 
@@ -58,7 +59,7 @@ PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, ui
      palSetPadMode(GPIOB, 11, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
 
      this->reset();
-     this->setFreq(this->freq);
+     this->setFreq(this->pwm_frequency);
 }
 
 /**
@@ -71,7 +72,7 @@ PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, ui
 PCA9685::PCA9685() {
     this->i2caddres = PCA9685_ADDRESS;
     this->driver = &PCA9685_DEFI2C_DRIVER;
-    this->freq = PCA9685_FREQ;
+    this->pwm_frequency = PCA9685_FREQ;
     this->config = &PCA9685_I2C_CONFIG;
     this->acquire = true;
 
@@ -80,7 +81,7 @@ PCA9685::PCA9685() {
      palSetPadMode(GPIOB, 11, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
 
      this->reset();
-     this->setFreq(this->freq);
+     this->setFreq(this->pwm_frequency);
 }
 
 /**
@@ -116,9 +117,7 @@ void PCA9685::reset(void) {
  * @return uint16_t previous frequency value
  *
  */
-uint16_t PCA9685::setFreq(uint16_t freq) {
-
-    uint16_t oldfreq = this->freq;
+void PCA9685::setFreq(uint32_t freq) {
 
     //According to NXP documentation (7.3.5 PWM frequency PRE_SCALE):
     // prescale = round((osc_clock / (4096 x rate)) - 1)
@@ -134,9 +133,31 @@ uint16_t PCA9685::setFreq(uint16_t freq) {
     this->writereg(PCA9685_MODE1, oldmode);
     chThdSleepMicroseconds(500);//Wait 0.5ms for oscillator stabilisation
     this->writereg(PCA9685_MODE1, oldmode | PCA9685_MODE1_ALLCALL | PCA9685_MODE1_AI | PCA9685_MODE1_RESTART);
-    this->freq = freq;
+    this->pwm_frequency = freq;
+}
 
-    return oldfreq;
+uint32_t PCA9685::getFreq(void) {
+    return this->pwm_frequency;
+}
+
+void PCA9685::setChannel(uint8_t channel) {
+    this->channel = channel;
+}
+
+void PCA9685::setPWM(uint8_t duty) {
+    float pulsetime;
+    uint16_t pulsewidth, on, off;
+    uint32_t currentpwm;
+
+
+    pulsetime = ((1.0/this->pwm_frequency) / 100.0)*duty;
+    pulsewidth = floor(pulsetime / ((1.0/this->pwm_frequency) / 4096.0));
+
+    currentpwm = this->getPWM(this->channel);
+    on = currentpwm & 0x0000ffff;
+    off = on + pulsewidth;
+    this->setPWM(this->channel, on, off);
+
 }
 
 /**
@@ -151,6 +172,7 @@ uint16_t PCA9685::setFreq(uint16_t freq) {
  */
 void PCA9685::setPWM(uint8_t channel, uint16_t on, uint16_t off) {
 
+  this->channel = channel;
   this->txbuff[0] = LED0_ON_L+4*channel;
   this->txbuff[1] = on & 0x00FF;
   this->txbuff[2] = on >> 8;
@@ -188,11 +210,16 @@ void PCA9685::setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, u
         j++;
     }
     this->tmo = MS2ST(4);
+    this->channel = channel;
 
     uint8_t oldmode = this->readreg(PCA9685_MODE1); //Preserve old mode
     this->writereg(PCA9685_MODE1, oldmode | PCA9685_MODE1_AI); //Set auto increment
     this->status = i2cMasterTransmitTimeout(this->driver, this->i2caddres, (uint8_t*) txbuff, (count+1) * sizeof(uint8_t), this->rxbuff, 0, this->tmo);
     this->writereg(PCA9685_MODE1, oldmode); //Restore old mode
+}
+
+uint8_t PCA9685::getPWM(void) {
+    return this->pwm_duty;
 }
 
 /**
@@ -235,6 +262,7 @@ void PCA9685::burstPWM(const PWMSet *set, uint8_t length){
 void PCA9685::setPeriod(uint8_t channel, float period, uint8_t duty) {
     float freq = (100.0 / duty) / period;
 
+    this->channel = channel;
     this->setFreq(ceil(freq));
     this->setPWM(channel, 0, (4096/100) * duty);
 }
