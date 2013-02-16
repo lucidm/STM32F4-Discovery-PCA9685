@@ -54,12 +54,9 @@ PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, ui
     this->config = config;
     this->acquire = acquirebus;
 
-     i2cStart(this->driver, this->config);
-     palSetPadMode(GPIOB, 10, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
-     palSetPadMode(GPIOB, 11, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
-
-     this->reset();
-     this->setFreq(this->pwm_frequency);
+    i2cStart(this->driver, this->config);
+    this->reset();
+    this->setFreq(this->pwm_frequency);
 }
 
 /**
