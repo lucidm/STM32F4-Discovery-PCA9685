@@ -107,7 +107,7 @@ class PCA9685 : public PWM {
         uint32_t getFreq(void);
 
         void setChannel(uint8_t channel);
-        void setPWM(uint8_t duty);
+        void setPWM(float duty);
         void setPWM(uint8_t channel, uint16_t on, uint16_t off);
         void setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, uint8_t count);
         uint8_t getPWM(void);

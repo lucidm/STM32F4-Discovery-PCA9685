@@ -144,7 +144,7 @@ void PCA9685::setChannel(uint8_t channel) {
     this->channel = channel;
 }
 
-void PCA9685::setPWM(uint8_t duty) {
+void PCA9685::setPWM(float duty) {
     float pulsetime;
     uint16_t pulsewidth, on, off;
     uint32_t currentpwm;

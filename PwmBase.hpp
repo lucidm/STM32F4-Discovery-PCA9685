@@ -3,7 +3,7 @@
 
 class PWM {
     public:
-        virtual void setPWM(uint8_t duty);
+        virtual void setPWM(float duty);
         virtual uint8_t getPWM(void);
         virtual void setFreq(uint32_t freq);
         virtual uint32_t getFreq(void);
