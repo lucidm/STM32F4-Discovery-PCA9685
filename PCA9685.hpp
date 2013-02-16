@@ -100,20 +100,20 @@ class PCA9685 : public PWM {
         void* operator new(size_t size);
         void operator delete(void *mem);
 
-
-        void reset(void);
-        uint8_t setAddress(uint8_t address);
+        /* Base class interface */
         void setFreq(uint32_t freq);
         uint32_t getFreq(void);
-
-        void setChannel(uint8_t channel);
+        void setChannel(uint16_t channel);
         void setPWM(float duty);
+        uint8_t getPWM(void);
+
+        /* PCA9685 Specificinterface */
+        void reset(void);
+        uint8_t setAddress(uint8_t address);
         void setPWM(uint8_t channel, uint16_t on, uint16_t off);
         void setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, uint8_t count);
-        uint8_t getPWM(void);
         uint32_t getPWM(uint8_t channel);
         void burstPWM(const PWMSet *set, uint8_t lenght);
-        void setPeriod(uint8_t channel, float period, uint8_t duty);
 
         uint16_t getRegisterValue(uint8_t reg);
         void acquireBus(uint8_t exclusive);
@@ -130,7 +130,6 @@ class PCA9685 : public PWM {
 
         uint8_t rxbuff[32];
         uint8_t txbuff[32];
-        uint8_t channel;
         msg_t status;
         systime_t tmo;
 

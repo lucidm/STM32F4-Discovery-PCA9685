@@ -140,8 +140,8 @@ uint32_t PCA9685::getFreq(void) {
     return this->pwm_frequency;
 }
 
-void PCA9685::setChannel(uint8_t channel) {
-    this->channel = channel;
+void PCA9685::setChannel(uint16_t channel) {
+    this->pwm_channel = channel;
 }
 
 void PCA9685::setPWM(float duty) {
@@ -153,10 +153,10 @@ void PCA9685::setPWM(float duty) {
     pulsetime = ((1.0/this->pwm_frequency) / 100.0)*duty;
     pulsewidth = floor(pulsetime / ((1.0/this->pwm_frequency) / 4096.0));
 
-    currentpwm = this->getPWM(this->channel);
+    currentpwm = this->getPWM(this->pwm_channel);
     on = currentpwm & 0x0000ffff;
     off = on + pulsewidth;
-    this->setPWM(this->channel, on, off);
+    this->setPWM(this->pwm_channel, on, off);
 
 }
 
@@ -172,7 +172,7 @@ void PCA9685::setPWM(float duty) {
  */
 void PCA9685::setPWM(uint8_t channel, uint16_t on, uint16_t off) {
 
-  this->channel = channel;
+  this->pwm_channel = channel;
   this->txbuff[0] = LED0_ON_L+4*channel;
   this->txbuff[1] = on & 0x00FF;
   this->txbuff[2] = on >> 8;
@@ -210,7 +210,7 @@ void PCA9685::setPWM(uint8_t channel, const uint16_t *on, const uint16_t *off, u
         j++;
     }
     this->tmo = MS2ST(4);
-    this->channel = channel;
+    this->pwm_channel = channel;
 
     uint8_t oldmode = this->readreg(PCA9685_MODE1); //Preserve old mode
     this->writereg(PCA9685_MODE1, oldmode | PCA9685_MODE1_AI); //Set auto increment
@@ -250,22 +250,6 @@ void PCA9685::burstPWM(const PWMSet *set, uint8_t length){
     this->writereg(PCA9685_MODE1, oldmode); //Restore old mode
 }
 
-/**
- * Set PWM for given channel using fraction of a second for counter to reach maximum value and given duty cycle in percents.
- * so you can change frequency without duty modification. Of course all channels of PCA9685 use clock source for their
- * counter changing period parameter will influence all channels.
- *
- * @param uint8_t channel - channel number
- * @param float period - fraction of a second for a counter to reach maximum value (in this time counter will count from 0 to 4095)
- * @param uint8_t duty - duty in percent of given period
- */
-void PCA9685::setPeriod(uint8_t channel, float period, uint8_t duty) {
-    float freq = (100.0 / duty) / period;
-
-    this->channel = channel;
-    this->setFreq(ceil(freq));
-    this->setPWM(channel, 0, (4096/100) * duty);
-}
 
 /**
  * Returns PWM value for given channel
@@ -277,6 +261,7 @@ void PCA9685::setPeriod(uint8_t channel, float period, uint8_t duty) {
 uint32_t PCA9685::getPWM(uint8_t channel) {
     uint32_t pwm = 0;
 
+    this->setChannel(channel);
     pwm = (this->readreg((LED0_ON_L+4*channel) + 2) & 0x0F) << 8;
     pwm |= this->readreg((LED0_ON_L+4*channel) + 3);
     pwm = pwm << 16; //Shift all by 16 bits, first half contains on period counter

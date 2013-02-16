@@ -7,10 +7,12 @@ class PWM {
         virtual uint8_t getPWM(void);
         virtual void setFreq(uint32_t freq);
         virtual uint32_t getFreq(void);
+        virtual void setChannel(uint16_t channel);
 
     protected:
         uint32_t pwm_frequency;
         uint8_t pwm_duty;
+        uint16_t pwm_channel;
 };
 
 

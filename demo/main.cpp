@@ -100,20 +100,6 @@ void cmd_pwm(BaseSequentialStream *chp, int argc, char *argv[]) {
   chprintf(chp, "STATUS : %u \r\n", pcachip->getStatus());
 }
 
-void cmd_period(BaseSequentialStream *chp, int argc, char *argv[]) {
-  (void)argv;
-  if (argc != 3) {
-    chprintf(chp, "Usage: period <channel> <period> <duty>\r\n");
-    return;
-  }
-
-  uint8_t channel = atoi(argv[0]);
-  float period = atof(argv[1]);
-  uint8_t duty = atoi(argv[2]);
-  pcachip->setPeriod(channel, period, duty);
-  chprintf(chp, "STATUS : %u \r\n", pcachip->getStatus());
-}
-
 
 /*
  * assert Shell Commands to functions
@@ -124,7 +110,6 @@ static const ShellCommand commands[] = {
   {"reg", cmd_reg},
   {"freq", cmd_freq},
   {"pwm", cmd_pwm},
-  {"per", cmd_period},
   {NULL, NULL}
 };
 
