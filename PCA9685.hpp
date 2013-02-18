@@ -94,7 +94,7 @@ typedef struct SPWMSet {
 
 class PCA9685 : public PWM {
     public:
-        PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address = PCA9685_ADDRESS, uint16_t freq = PCA9685_FREQ, uint8_t acquirebus = true);
+        PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address = PCA9685_ADDRESS, uint16_t freq = PCA9685_FREQ, bool acquirebus = true);
         PCA9685();
         ~PCA9685();
         void* operator new(size_t size);
@@ -126,7 +126,7 @@ class PCA9685 : public PWM {
         uint8_t i2caddres;
         I2CDriver *driver;
         const I2CConfig *config;
-        uint8_t acquire;
+        bool acquire;
 
         uint8_t rxbuff[32];
         uint8_t txbuff[32];

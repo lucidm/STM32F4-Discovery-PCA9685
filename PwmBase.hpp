@@ -8,6 +8,7 @@ class PWM {
         virtual void setFreq(uint32_t freq);
         virtual uint32_t getFreq(void);
         virtual void setChannel(uint16_t channel);
+        virtual i2cflags_t getStatus();
 
     protected:
         uint32_t pwm_frequency;

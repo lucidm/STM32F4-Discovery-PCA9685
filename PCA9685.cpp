@@ -47,12 +47,12 @@ extern "C" {
  * @param uint8_t acquirebus - set I2C bus exclusive for thread
  *
  */
-PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, uint16_t freq, uint8_t acquirebus) {
+PCA9685::PCA9685(I2CDriver *driver, const I2CConfig *config, uint8_t address, uint16_t freq, bool acquirebus) {
     this->i2caddres = address;
     this->driver = driver;
     this->pwm_frequency = freq;
     this->config = config;
-    this->acquire = acquirebus;
+    this->acquire = acquirebus; //Prevents from accessing the bus from more than one threads
 
     i2cStart(this->driver, this->config);
     this->reset();
@@ -73,12 +73,9 @@ PCA9685::PCA9685() {
     this->config = &PCA9685_I2C_CONFIG;
     this->acquire = true;
 
-     i2cStart(this->driver, this->config);
-     palSetPadMode(GPIOB, 10, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
-     palSetPadMode(GPIOB, 11, PAL_STM32_OTYPE_OPENDRAIN | PAL_STM32_OSPEED_MID2 | PAL_MODE_ALTERNATE(4));
-
-     this->reset();
-     this->setFreq(this->pwm_frequency);
+    i2cStart(this->driver, this->config);
+    this->reset();
+    this->setFreq(this->pwm_frequency);
 }
 
 /**
@@ -143,7 +140,7 @@ void PCA9685::setChannel(uint16_t channel) {
 
 void PCA9685::setPWM(float duty) {
     float pulsetime;
-    uint16_t pulsewidth, on, off;
+    uint16_t pulsewidth, on=0, off=0;
     uint32_t currentpwm;
 
 
@@ -153,6 +150,7 @@ void PCA9685::setPWM(float duty) {
     currentpwm = this->getPWM(this->pwm_channel);
     on = currentpwm & 0x0000ffff;
     off = on + pulsewidth;
+
     this->setPWM(this->pwm_channel, on, off);
 
 }
